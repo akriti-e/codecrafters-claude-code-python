@@ -1,6 +1,7 @@
 import argparse
 import json
 import os
+import subprocess
 import sys
 
 from openai import OpenAI
@@ -57,6 +58,23 @@ def main():
               }
            }
         }
+      },
+      {
+        "type": "function",
+        "function": {
+          "name": "Bash",
+          "description": "Execute a shell command",
+          "parameters": {
+            "type": "object",
+            "required": ["command"],
+            "properties": {
+              "command": {
+                "type": "string",
+                "description": "The command to execute",
+              }
+            }
+          }
+        }
         }]
     messages = [{"role": "user", "content": args.p}]
 
@@ -86,6 +104,14 @@ def main():
           with open(arguments["file_path"], "w", encoding="utf-8") as file:
             file.write(arguments["content"])
           result = ""
+        elif tool_call.function.name == "Bash":
+          completed_process = subprocess.run(
+            arguments["command"],
+            shell=True,
+            capture_output=True,
+            text=True,
+          )
+          result = completed_process.stdout + completed_process.stderr
         else:
           raise RuntimeError(f"unsupported tool: {tool_call.function.name}")
 
