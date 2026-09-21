@@ -78,12 +78,16 @@ def main():
         return
 
       for tool_call in message.tool_calls:
-        if tool_call.function.name != "Read":
-          raise RuntimeError(f"unsupported tool: {tool_call.function.name}")
-
         arguments = json.loads(tool_call.function.arguments)
-        with open(arguments["file_path"], encoding="utf-8") as file:
-          result = file.read()
+        if tool_call.function.name == "Read":
+          with open(arguments["file_path"], encoding="utf-8") as file:
+            result = file.read()
+        elif tool_call.function.name == "Write":
+          with open(arguments["file_path"], "w", encoding="utf-8") as file:
+            file.write(arguments["content"])
+          result = ""
+        else:
+          raise RuntimeError(f"unsupported tool: {tool_call.function.name}")
 
         messages.append({
           "role": "tool",
